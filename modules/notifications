@@ -1,0 +1,4 @@
+<?php
+echo "<h1>".ucfirst(basename(dirname(__FILE__)))." Module</h1>";
+echo "<p>Under construction.</p>";
+?>

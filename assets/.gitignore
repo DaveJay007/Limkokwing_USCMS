@@ -1,0 +1,20 @@
+# Ignore all XAMPP temp and log files
+*.log
+*.tmp
+
+# Ignore sensitive config (if you have credentials)
+/includes/config.php
+
+# Ignore composer vendor folder (if you installed PHPMailer via composer)
+/vendor/
+
+# Ignore uploads folder (student files, etc.)
+/uploads/
+
+# Ignore IDE files
+.vscode/
+.idea/
+
+# Ignore OS junk
+Thumbs.db
+.DS_Store
