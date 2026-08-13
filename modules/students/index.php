@@ -1,6 +1,6 @@
 <?php
 session_start();
-if (!isset($_SESSION['user_id']) || $_SESSION['role_id'] != 1) {
+if (!isset($_SESSION['user_id']) || ($_SESSION['role_id'] != 1 && $_SESSION['role_id'] != 2)) {
     header('Location: ../../index.php');
     exit;
 }
@@ -29,7 +29,9 @@ $students = $stmt->fetchAll();
 <div class="container mt-4">
     <div class="d-flex justify-content-between align-items-center mb-4">
         <h2><i class="fas fa-user-graduate me-2"></i> Student Management</h2>
-        <a href="add.php" class="btn btn-primary"><i class="fas fa-plus me-1"></i> Add Student</a>
+        <?php if ($_SESSION['role_id'] == 1): // Only Admin can add ?>
+            <a href="add.php" class="btn btn-primary"><i class="fas fa-plus me-1"></i> Add Student</a>
+        <?php endif; ?>
     </div>
 
     <div class="card shadow">
@@ -62,8 +64,12 @@ $students = $stmt->fetchAll();
                                     </span>
                                 </td>
                                 <td>
-                                    <a href="edit.php?id=<?php echo $row['id']; ?>" class="btn btn-sm btn-outline-primary"><i class="fas fa-edit"></i></a>
-                                    <a href="delete.php?id=<?php echo $row['id']; ?>" class="btn btn-sm btn-outline-danger" onclick="return confirm('Are you sure?')"><i class="fas fa-trash"></i></a>
+                                    <?php if ($_SESSION['role_id'] == 1): // Only Admin can edit/delete ?>
+                                        <a href="edit.php?id=<?php echo $row['id']; ?>" class="btn btn-sm btn-outline-primary"><i class="fas fa-edit"></i></a>
+                                        <a href="delete.php?id=<?php echo $row['id']; ?>" class="btn btn-sm btn-outline-danger" onclick="return confirm('Are you sure?')"><i class="fas fa-trash"></i></a>
+                                    <?php else: ?>
+                                        <span class="text-muted">View only</span>
+                                    <?php endif; ?>
                                 </td>
                             </tr>
                             <?php endforeach; ?>

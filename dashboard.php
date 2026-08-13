@@ -391,18 +391,32 @@ $recentActivity = $pdo->query("
         </div>
     </div>
 
-    <!-- Floating Navigation (UPDATED: added Super Admin link for admin only) -->
+    <!-- Floating Navigation (Role‑Based) -->
     <div class="floating-nav">
-        <a href="modules/students/index.php" class="active"><i class="fas fa-users me-1"></i> Students</a>
-        <a href="modules/lecturers/index.php"><i class="fas fa-chalkboard-teacher me-1"></i> Lecturers</a>
-        <a href="modules/courses/index.php"><i class="fas fa-book-open me-1"></i> Courses</a>
-        <a href="modules/attendance/index.php"><i class="fas fa-clipboard-check me-1"></i> Attendance</a>
-        <a href="modules/timetable/index.php"><i class="fas fa-clock me-1"></i> Timetable</a>
-        <a href="modules/academic_records/index.php"><i class="fas fa-graduation-cap me-1"></i> Academic</a>
-        <a href="modules/learning/index.php"><i class="fas fa-book-open me-1"></i> Learning</a>
-        <a href="modules/analytics/index.php"><i class="fas fa-chart-bar me-1"></i> Analysis</a>
-        <?php if ($_SESSION['role_id'] == 1): ?>
+        <?php if ($_SESSION['role_id'] == 1): // Admin ?>
+            <a href="modules/students/index.php" class="active"><i class="fas fa-users me-1"></i> Students</a>
+            <a href="modules/lecturers/index.php"><i class="fas fa-chalkboard-teacher me-1"></i> Lecturers</a>
+            <a href="modules/courses/index.php"><i class="fas fa-book-open me-1"></i> Courses</a>
+            <a href="modules/attendance/index.php"><i class="fas fa-clipboard-check me-1"></i> Attendance</a>
+            <a href="modules/timetable/index.php"><i class="fas fa-clock me-1"></i> Timetable</a>
+            <a href="modules/academic_records/index.php"><i class="fas fa-graduation-cap me-1"></i> Academic</a>
+            <a href="modules/learning/index.php"><i class="fas fa-book-open me-1"></i> Learning</a>
+            <a href="modules/analytics/index.php"><i class="fas fa-chart-bar me-1"></i> Analysis</a>
             <a href="modules/super_admin/index.php"><i class="fas fa-user-shield me-1"></i> Super Admin</a>
+        <?php elseif ($_SESSION['role_id'] == 2): // Lecturer ?>
+            <a href="modules/students/index.php" class="active"><i class="fas fa-users me-1"></i> Students</a>
+            <a href="modules/lecturers/index.php"><i class="fas fa-chalkboard-teacher me-1"></i> Lecturers</a>
+            <a href="modules/courses/index.php"><i class="fas fa-book-open me-1"></i> Courses</a>
+            <a href="modules/timetable/index.php"><i class="fas fa-clock me-1"></i> Timetable</a>
+            <a href="modules/academic_records/index.php"><i class="fas fa-graduation-cap me-1"></i> Academic</a>
+            <a href="modules/learning/index.php"><i class="fas fa-book-open me-1"></i> Learning</a>
+            <a href="modules/analytics/index.php"><i class="fas fa-chart-bar me-1"></i> Analysis</a>
+        <?php else: // Student ?>
+            <a href="modules/courses/index.php" class="active"><i class="fas fa-book-open me-1"></i> Courses</a>
+            <a href="modules/timetable/index.php"><i class="fas fa-clock me-1"></i> Timetable</a>
+            <a href="modules/academic_records/index.php"><i class="fas fa-graduation-cap me-1"></i> Academic</a>
+            <a href="modules/learning/index.php"><i class="fas fa-book-open me-1"></i> Learning</a>
+            <a href="modules/analytics/index.php"><i class="fas fa-chart-bar me-1"></i> Analysis</a>
         <?php endif; ?>
     </div>
 
@@ -480,6 +494,7 @@ $recentActivity = $pdo->query("
             </div>
         </div>
         <div class="col-lg-4">
+            <?php if ($_SESSION['role_id'] == 1): // Only Admin sees Quick Actions ?>
             <div class="panel-card">
                 <div class="card-title"><span><i class="fas fa-bolt me-2" style="color:var(--primary);"></i> Quick Actions</span></div>
                 <div class="d-flex flex-column gap-2">
@@ -490,6 +505,7 @@ $recentActivity = $pdo->query("
                     <a href="#" class="quick-action" onclick="return modulePlaceholder(this)"><i class="fas fa-upload"></i><span>Upload course material</span></a>
                 </div>
             </div>
+            <?php endif; ?>
             <div class="panel-card mt-3">
                 <div class="card-title"><span><i class="fas fa-bell me-2" style="color:var(--primary);"></i> Notifications</span><span class="badge bg-primary rounded-pill">3</span></div>
                 <ul class="list-unstyled" style="font-size:0.8rem;">
@@ -531,19 +547,16 @@ $recentActivity = $pdo->query("
 
         // Apply saved theme
         function applyTheme(theme) {
-            // Remove all theme classes
             body.classList.remove('theme-black', 'theme-grey', 'theme-sky', 'theme-green');
             if (theme !== 'default') {
                 body.classList.add('theme-' + theme);
             }
-            // Update active state on buttons
             colorBtns.forEach(btn => {
                 btn.classList.toggle('active', btn.dataset.color === theme);
             });
             localStorage.setItem('uscms_theme', theme);
         }
 
-        // Click handler
         colorBtns.forEach(btn => {
             btn.addEventListener('click', function() {
                 const color = this.dataset.color;
@@ -551,7 +564,6 @@ $recentActivity = $pdo->query("
             });
         });
 
-        // Apply saved theme on load
         applyTheme(currentTheme);
     })();
 </script>

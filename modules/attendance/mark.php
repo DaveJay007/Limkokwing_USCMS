@@ -27,9 +27,9 @@ if (!$session) {
     exit;
 }
 
-// Fetch all students (we'll later filter by course/programme)
+// Fetch all active students (we'll later filter by course/programme if needed)
 $students = $pdo->query("
-    SELECT s.id as student_id, s.student_id, u.full_name
+    SELECT s.id as student_id, s.student_id as student_code, u.full_name
     FROM students s
     JOIN users u ON s.user_id = u.id
     WHERE s.status = 'active'
@@ -46,28 +46,49 @@ while ($row = $existing->fetch()) {
 
 // Handle form submission (manual marking)
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['mark_attendance'])) {
-    // Get the attendance data
     $statuses = $_POST['status'] ?? [];
-    // For each student, update or insert
+    $errors = [];
+    $success = false;
+
+    // Pre-fetch all valid student IDs to ensure foreign key integrity
+    $validStudentIds = array_column($students, 'student_id');
+
     foreach ($students as $student) {
-        $sid = $student['student_id'];
-        $status = $statuses[$sid] ?? 'absent'; // default absent
-        // Check if already exists
-        $check = $pdo->prepare("SELECT id FROM attendance WHERE session_id = ? AND student_id = ?");
-        $check->execute([$session_id, $sid]);
-        if ($check->fetch()) {
-            // Update
-            $update = $pdo->prepare("UPDATE attendance SET status = ? WHERE session_id = ? AND student_id = ?");
-            $update->execute([$status, $session_id, $sid]);
-        } else {
-            // Insert
-            $insert = $pdo->prepare("INSERT INTO attendance (session_id, student_id, status) VALUES (?, ?, ?)");
-            $insert->execute([$session_id, $sid, $status]);
+        $sid = $student['student_id'];  // integer primary key
+        $status = $statuses[$sid] ?? 'absent';
+
+        // Skip if student ID is not in the valid list (should not happen)
+        if (!in_array($sid, $validStudentIds)) {
+            continue;
+        }
+
+        try {
+            // Check if already exists
+            $check = $pdo->prepare("SELECT id FROM attendance WHERE session_id = ? AND student_id = ?");
+            $check->execute([$session_id, $sid]);
+            if ($check->fetch()) {
+                // Update
+                $update = $pdo->prepare("UPDATE attendance SET status = ? WHERE session_id = ? AND student_id = ?");
+                $update->execute([$status, $session_id, $sid]);
+            } else {
+                // Insert – this will fail if the student doesn't exist (but we validated above)
+                $insert = $pdo->prepare("INSERT INTO attendance (session_id, student_id, status, marked_at) VALUES (?, ?, ?, NOW())");
+                $insert->execute([$session_id, $sid, $status]);
+            }
+            $success = true;
+        } catch (PDOException $e) {
+            // Catch foreign key or other errors
+            $errors[] = "Error for student ID $sid: " . $e->getMessage();
         }
     }
-    // Refresh the page to show updated statuses
-    header("Location: mark.php?session_id=$session_id&updated=1");
-    exit;
+
+    if ($success && empty($errors)) {
+        header("Location: mark.php?session_id=$session_id&updated=1");
+        exit;
+    } else {
+        // Show errors
+        $error_message = implode('<br>', $errors);
+    }
 }
 
 // Handle QR scan: if we get a token via GET
@@ -75,12 +96,7 @@ $qr_success = '';
 $qr_error = '';
 if (isset($_GET['qr_token'])) {
     $token = $_GET['qr_token'];
-    // Verify token matches session's qr_code
     if ($token === $session['qr_code']) {
-        // Mark the current logged-in user as present? But we need a student user.
-        // For simplicity, we'll show a success message and let the user mark manually.
-        // Actually, QR scan should be done via a mobile app or a separate page.
-        // We'll just display a message.
         $qr_success = 'QR code verified! You can mark yourself present.';
     } else {
         $qr_error = 'Invalid QR code.';
@@ -124,6 +140,9 @@ if (isset($_GET['qr_token'])) {
         <?php if (isset($_GET['updated'])): ?>
             <div class="alert alert-success mt-2">Attendance updated successfully!</div>
         <?php endif; ?>
+        <?php if (isset($error_message)): ?>
+            <div class="alert alert-danger mt-2"><?php echo $error_message; ?></div>
+        <?php endif; ?>
         <?php if ($qr_success): ?>
             <div class="alert alert-success mt-2"><?php echo $qr_success; ?></div>
         <?php endif; ?>
@@ -148,7 +167,7 @@ if (isset($_GET['qr_token'])) {
                         <tbody>
                             <?php foreach ($students as $student): ?>
                             <tr>
-                                <td><?php echo htmlspecialchars($student['student_id']); ?></td>
+                                <td><?php echo htmlspecialchars($student['student_code']); ?></td>
                                 <td><?php echo htmlspecialchars($student['full_name']); ?></td>
                                 <td>
                                     <select name="status[<?php echo $student['student_id']; ?>]" class="form-select">
@@ -179,7 +198,8 @@ if (isset($_GET['qr_token'])) {
             </div>
             <div class="modal-body text-center">
                 <img id="qrImage" src="" alt="QR Code" class="img-fluid">
-                <p class="mt-2"><small>Scan to mark attendance (token: <span id="qrToken"></span>)</small></p>
+                <p class="mt-2"><small>Scan this QR to mark attendance</small></p>
+                <p><small>Token: <span id="qrToken"></span></small></p>
             </div>
         </div>
     </div>
@@ -188,10 +208,16 @@ if (isset($_GET['qr_token'])) {
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 <script>
     function showQR(token) {
-        const img = document.getElementById('qrImage');
-        img.src = 'https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=' + encodeURIComponent(token);
+        // Build the full URL for scanning – use the same host as the current page, but replace with the public ngrok URL if needed
+        // For local testing, it will use localhost; for public access, update the baseUrl to your ngrok URL.
+        var baseUrl = window.location.origin + '/Limbkoking_USCMS/scan_attendance.php?token=' + encodeURIComponent(token);
+        // If you have an ngrok URL, you can uncomment and set it:
+        // var baseUrl = 'https://your-ngrok-url.ngrok.io/Limbkoking_USCMS/scan_attendance.php?token=' + encodeURIComponent(token);
+
+        var img = document.getElementById('qrImage');
+        img.src = 'https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=' + encodeURIComponent(baseUrl);
         document.getElementById('qrToken').textContent = token;
-        const modal = new bootstrap.Modal(document.getElementById('qrModal'));
+        var modal = new bootstrap.Modal(document.getElementById('qrModal'));
         modal.show();
     }
 </script>

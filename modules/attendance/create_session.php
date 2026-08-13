@@ -22,25 +22,22 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $error = 'Please select a course.';
     } else {
         // Generate unique token
-        $token = bin2hex(random_bytes(16)); // 32 character hex
-        // Check if token already exists (very unlikely)
+        $token = bin2hex(random_bytes(16));
         $check = $pdo->prepare("SELECT id FROM attendance_sessions WHERE qr_code = ?");
         $check->execute([$token]);
         if ($check->fetch()) {
             $error = 'Token collision, please try again.';
         } else {
-            // Insert session
             $stmt = $pdo->prepare("INSERT INTO attendance_sessions (course_id, session_date, qr_code) VALUES (?, ?, ?)");
             if ($stmt->execute([$course_id, $session_date, $token])) {
                 $session_id = $pdo->lastInsertId();
-                // Build QR code URL (public URL to scan page)
-                $base_url = (isset($_SERVER['HTTPS']) ? 'https://' : 'http://') . $_SERVER['HTTP_HOST'] . dirname($_SERVER['SCRIPT_NAME'], 2) . '/scan_attendance.php?token=' . $token;
-                // Use QR code API (free)
-                $qr_image = "https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=" . urlencode($base_url);
+                // 🔥 REPLACE WITH YOUR NGROK PUBLIC URL
+                $public_url = 'https://abc123.ngrok.io/Limbkoking_USCMS/scan_attendance.php?token=' . $token;
+                $qr_image = "https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=" . urlencode($public_url);
                 $success = "Attendance session created!";
                 $qr_data = [
                     'image' => $qr_image,
-                    'url' => $base_url,
+                    'url' => $public_url,
                     'token' => $token
                 ];
             } else {

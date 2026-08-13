@@ -184,35 +184,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['register'])) {
             border-radius: 40px;
             margin-top: 0.3rem;
         }
-        .floating-nav {
-            display: flex;
-            flex-wrap: wrap;
-            justify-content: center;
-            gap: 0.4rem 0.8rem;
-            margin-bottom: 1.8rem;
-            padding: 0.4rem 0.8rem;
-            background: rgba(255, 255, 255, 0.4);
-            backdrop-filter: blur(8px);
-            border-radius: 60px;
-            border: 1px solid rgba(255, 255, 255, 0.5);
-        }
-        .floating-nav a {
-            font-size: 0.75rem;
-            font-weight: 600;
-            color: #4a3a6a;
-            padding: 0.3rem 1rem;
-            border-radius: 40px;
-            text-decoration: none;
-            transition: var(--transition);
-            letter-spacing: 0.2px;
-            cursor: pointer;
-        }
-        .floating-nav a:hover,
-        .floating-nav a.active {
-            background: var(--primary);
-            color: #fff;
-            box-shadow: 0 4px 20px rgba(108, 59, 201, 0.12);
-        }
         .auth-card .form-control {
             border-radius: var(--radius-sm);
             padding: 0.75rem 1.1rem;
@@ -318,8 +289,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['register'])) {
         .form-toggle.active { display: block; }
         @media (max-width: 768px) {
             .auth-card { padding: 2rem 1.5rem; }
-            .floating-nav { gap: 0.3rem 0.5rem; padding: 0.3rem 0.6rem; }
-            .floating-nav a { font-size: 0.65rem; padding: 0.2rem 0.7rem; }
         }
         @media (max-width: 576px) {
             .auth-card { padding: 1.5rem 1.2rem; border-radius: 20px; }
@@ -334,22 +303,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['register'])) {
 
         <!-- Brand with Logo -->
         <div class="auth-brand">
-            <img src="C:/xampp/htdocs/uscms/assets/images/limkokwing-logo.png" alt="Limkokwing University" class="logo-img">
+            <img src="assets/images/limkokwing-logo.png" alt="Limkokwing University" class="logo-img">
             <h1>Limkokwing USCMS</h1>
             <div class="subtitle">University Smart Campus</div>
             <div class="campus-name">
                 <i class="fas fa-map-pin me-1"></i> Limkokwing University of Creative Technology
             </div>
-        </div>
-
-        <!-- Floating Nav (links to actual modules) -->
-        <div class="floating-nav">
-            <a href="modules/students/index.php" class="active"><i class="fas fa-users me-1"></i> Students</a>
-            <a href="modules/lecturers/index.php"><i class="fas fa-chalkboard-teacher me-1"></i> Lecturers</a>
-            <a href="modules/courses/index.php"><i class="fas fa-book-open me-1"></i> Courses</a>
-            <a href="modules/attendance/index.php"><i class="fas fa-clipboard-check me-1"></i> Attendance</a>
-            <a href="modules/timetable/index.php"><i class="fas fa-clock me-1"></i> Timetable</a>
-            <a href="#" onclick="return modulePlaceholder(this)"><i class="fas fa-chart-bar me-1"></i> Analysis</a>
         </div>
 
         <!-- ======== LOGIN FORM ======== -->
@@ -485,12 +444,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['register'])) {
                 roleInput.value = roleMap[this.dataset.role] || 3;
             });
         });
-
-        // Floating nav placeholder for "Analysis"
-        window.modulePlaceholder = function(link) {
-            alert('🔔 This module is under construction. Please check back later.');
-            return false;
-        };
 
         // If registration success, switch to login after 2 seconds
         <?php if ($reg_success): ?>
